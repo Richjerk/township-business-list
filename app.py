@@ -11,9 +11,9 @@ import os
 # ✅ Load environment variables
 load_dotenv()
 
-# ✅ Configure Mongo URI
+# ✅ Configure Mongo URI (fixed key name)
 is_streamlit_cloud = os.getenv("STREAMLIT_SERVER_HEADLESS") == "1"
-mongo_uri = st.secrets.get("MONGODB_URI") if is_streamlit_cloud else os.getenv("MONGODB_URI")
+mongo_uri = st.secrets.get("MONGO_URI") if is_streamlit_cloud else os.getenv("MONGO_URI")
 
 # ✅ First Streamlit command
 st.set_page_config(
@@ -82,7 +82,7 @@ st.markdown("""
 
 # ✅ Sidebar
 st.sidebar.title("💼 Township Directory")
-st.sidebar.success("Connected to MongoDB" if mongo_uri else "Not Connected to MongoDB")
+st.sidebar.success("✅ Connected to MongoDB" if mongo_uri else "❌ Not Connected to MongoDB")
 st.sidebar.markdown("---")
 st.sidebar.info(f"Running in {'Streamlit Cloud' if is_streamlit_cloud else 'Local'} Mode")
 
@@ -117,7 +117,7 @@ with tab1:
 
 with tab2:
     st.subheader("📍 Businesses Near You")
-    from components.business_card import render_business_card  # Adjust if needed
+    from components.business_card import render_business_card
     businesses = get_businesses()
     for b in businesses:
         render_business_card(b)
@@ -137,3 +137,9 @@ with tab6:
 # ✅ Fallback warning
 if not mongo_uri:
     st.warning("⚠️ MongoDB URI is missing! Please check your environment variables or Streamlit secrets.")
+
+# ✅ Optional Debug/Test Section (can be removed later)
+if st.sidebar.checkbox("🔍 Show Debug Info"):
+    st.subheader("🔍 Debug: Mongo URI & Cloudinary Config")
+    st.write("Mongo URI:", mongo_uri)
+    st.write("Cloudinary cloud name:", st.secrets["cloudinary"]["cloud_name"])

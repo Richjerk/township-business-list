@@ -1,20 +1,19 @@
 import streamlit as st
-import datetime
+from utils import get_mongo_client
+
+client = get_mongo_client()
+buyers_col = client["township_directory"]["buyers"]
 
 def register_buyer():
-    st.header("🙋 Register as a Buyer")
-    username = st.text_input("Your Name")
-    email = st.text_input("Your Email")
-    whatsapp = st.text_input("WhatsApp Number")
+    st.subheader("Register as a Buyer")
+    name = st.text_input("Your Name")
+    email = st.text_input("Email")
+    phone = st.text_input("WhatsApp Number")
 
     if st.button("Register"):
-        if username and email and whatsapp:
-            users.insert_one({
-                "username": username,
-                "email": email,
-                "whatsapp": whatsapp,
-                "registered_at": datetime.datetime.utcnow()
-            })
-            st.success("🎉 Buyer registered successfully!")
-        else:
-            st.warning("Please complete all fields.")
+        buyers_col.insert_one({
+            "name": name,
+            "email": email,
+            "phone": phone
+        })
+        st.success(f"{name}, you've been registered!")
