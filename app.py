@@ -5,6 +5,7 @@ from chat import load_chatbot, ask_chatbot_form
 from ads import show_ads, upload_ad_form
 from user import register_buyer
 from utils import configure_cloudinary
+import os
 
 # ✅ MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
@@ -130,3 +131,6 @@ with tab5:
 
 with tab6:
     upload_ad_form()
+
+# Get Mongo URI from Streamlit secrets or environment variable
+mongo_uri = st.secrets.get("MONGO_URI") or os.getenv("MONGO_URI")
