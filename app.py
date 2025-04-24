@@ -6,6 +6,9 @@ from ads import show_ads, upload_ad_form
 from user import register_buyer
 from utils import configure_cloudinary
 from dotenv import load_dotenv
+from chat import ask_chatbot_form
+
+ask_chatbot_form()
 import os
 
 # ✅ Load environment variables
