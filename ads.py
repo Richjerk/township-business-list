@@ -1,48 +1,29 @@
-import datetime
+# ads.py
 import streamlit as st
-import cloudinary.uploader
+from db import get_ads_collection
+from utils import upload_image_to_cloudinary, get_current_utc_time
+
+def upload_ad(title, advertiser, url, image_file):
+    ads = get_ads_collection()
+
+    image_url = None
+    if image_file:
+        image_url = upload_image_to_cloudinary(image_file, "ads")
+
+    ads.insert_one({
+        "title": title,
+        "advertiser": advertiser,
+        "url": url,
+        "image_url": image_url,
+        "clicks": 0,
+        "created_at": get_current_utc_time()
+    })
 
 def show_ads():
-    sort_option = st.selectbox("Sort Ads by", ["Latest", "Most Clicked"])
-    ads_data = list(ads.find().sort("created_at" if sort_option == "Latest" else "clicks", -1))
+    ads = get_ads_collection()
+    sort_option = st.selectbox("Sort by", ["Latest", "Most Clicks"])
+    sort_field = "created_at" if sort_option == "Latest" else "clicks"
+    ads_data = list(ads.find().sort(sort_field, -1))
+    return ads_data
 
-    if ads_data:
-        for ad in ads_data:
-            st.subheader(ad.get("title", "Untitled"))
-            if ad.get("image_url"):
-                st.image(ad["image_url"], use_column_width=True)
-            if ad.get("advertiser"):
-                st.write(f"🧾 Advertiser: {ad['advertiser']}")
-            if ad.get("url"):
-                if st.button(f"🔗 Visit {ad['title']}", key=f"btn_{ad['_id']}"):
-                    ads.update_one({"_id": ad["_id"]}, {"$inc": {"clicks": 1}})
-                    st.markdown(f"[Visit Site]({ad['url']})", unsafe_allow_html=True)
-            st.markdown("---")
-    else:
-        st.info("No ads available yet.")
 
-def upload_ad_form():
-    st.header("📢 Upload Advertisement")
-    title = st.text_input("Ad Title")
-    advertiser = st.text_input("Advertiser Name")
-    url = st.text_input("Ad URL")
-    image_file = st.file_uploader("Upload Ad Image", type=["jpg", "jpeg", "png"])
-
-    if st.button("Upload Ad"):
-        if title and advertiser and url:
-            image_url = None
-            if image_file:
-                uploaded = cloudinary.uploader.upload(image_file, folder="ads")
-                image_url = uploaded.get("secure_url")
-
-            ads.insert_one({
-                "title": title,
-                "advertiser": advertiser,
-                "url": url,
-                "image_url": image_url,
-                "clicks": 0,
-                "created_at": datetime.datetime.utcnow()
-            })
-            st.success("📢 Advertisement uploaded successfully!")
-        else:
-            st.warning("Please fill in all the required fields.")

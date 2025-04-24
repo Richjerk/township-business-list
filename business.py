@@ -3,6 +3,12 @@ import streamlit as st
 from geopy.geocoders import Nominatim
 import cloudinary.uploader
 from cloudinary import config
+from pymongo import MongoClient
+
+# 🧩 MongoDB setup (adjust this URI as needed)
+client = MongoClient("mongodb+srv://puseletso55:Daniel%409615@townshipbusinesschatbot.awtrt6h.mongodb.net/?retryWrites=true&w=majority&appName=TownshipBusinessChatbot")
+db = client["township-directory"]
+businesses = db["businesses"]
 
 def add_business_form():
     st.header("📝 Add a New Business")
@@ -30,11 +36,12 @@ def add_business_form():
                 "address": address,
                 "location": {"lat": lat, "lon": lon},
                 "image_url": image_url,
+                "premium": False,
                 "created_at": datetime.datetime.utcnow()
             })
             st.success("✅ Business added successfully!")
         else:
-            st.warning("Please fill in all required fields.")
+            st.warning("⚠️ Please fill in all required fields.")
 
 def view_businesses_form():
     st.header("📍 View Registered Businesses")
@@ -49,7 +56,7 @@ def view_businesses_form():
                 st.image(biz["image_url"], width=400)
             st.markdown("---")
     else:
-        st.info("No businesses listed yet.")
+        st.info("📭 No businesses listed yet.")
 
 def view_premium_businesses():
     st.header("⭐ Premium Businesses")
@@ -64,4 +71,17 @@ def view_premium_businesses():
                 st.image(p["image_url"], width=400)
             st.markdown("---")
     else:
-        st.info("No premium businesses yet.")
+        st.info("🚫 No premium businesses yet.")
+
+def get_businesses():
+    """
+    Returns a simplified list of businesses for display in the carousel/ads format.
+    """
+    business_list = businesses.find({}, {"name": 1, "image_url": 1}).limit(10)
+    return [
+        {
+            "business_name": biz.get("name", "Unnamed"),
+            "logo_url": biz.get("image_url", "https://via.placeholder.com/100")
+        }
+        for biz in business_list
+    ]
