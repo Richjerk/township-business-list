@@ -8,31 +8,35 @@ from utils import configure_cloudinary
 from dotenv import load_dotenv
 import os
 
-# ✅ Load environment variables for local development
+# ✅ Load environment variables
 load_dotenv()
 
-# ✅ MUST BE FIRST STREAMLIT COMMAND
+# ✅ Configure Mongo URI
+is_streamlit_cloud = os.getenv("STREAMLIT_SERVER_HEADLESS") == "1"
+mongo_uri = st.secrets.get("MONGODB_URI") if is_streamlit_cloud else os.getenv("MONGODB_URI")
+
+# ✅ First Streamlit command
 st.set_page_config(
     page_title="Township Business Directory",
     page_icon="📍",
     layout="wide"
 )
 
-# ✅ Cloudinary setup
+# ✅ Cloudinary config
 configure_cloudinary()
 
 # ✅ Load chatbot
 chatbot = load_chatbot()
 
-# 🌗 Theme Switcher
+# 🌗 Theme toggle
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 
-# Toggle theme
-theme_toggle = st.sidebar.checkbox("🌗 Toggle Dark Mode", value=st.session_state.theme == "dark")
-st.session_state.theme = "dark" if theme_toggle else "light"
+if st.sidebar.checkbox("🌗 Toggle Dark Mode", value=st.session_state.theme == "dark"):
+    st.session_state.theme = "dark"
+else:
+    st.session_state.theme = "light"
 
-# Apply theme-based styles
 if st.session_state.theme == "dark":
     st.markdown(""" 
         <style>
@@ -43,7 +47,7 @@ if st.session_state.theme == "dark":
         </style>
     """, unsafe_allow_html=True)
 
-# 🖼 Custom CSS for tabs & cards
+# ✅ Custom CSS
 st.markdown("""
     <style>
         .stTabs [role="tablist"] {
@@ -76,15 +80,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar
+# ✅ Sidebar
 st.sidebar.title("💼 Township Directory")
-st.sidebar.success("Connected to MongoDB")
+st.sidebar.success("Connected to MongoDB" if mongo_uri else "Not Connected to MongoDB")
 st.sidebar.markdown("---")
+st.sidebar.info(f"Running in {'Streamlit Cloud' if is_streamlit_cloud else 'Local'} Mode")
 
-# 🔁 Auto-refresh for ad rotation every 7 seconds
+# 🔁 Auto-refresh ads
 st_autorefresh(interval=7000, key="ad_refresh")
 
-# 🔄 Rotating Ads
+# 🔄 Ads display
 ads_data = show_ads()
 if ads_data:
     st.markdown("### 📢 Featured Advertisement")
@@ -93,12 +98,11 @@ if ads_data:
 
     current_ad = ads_data[st.session_state.ad_index]
     st.image(current_ad["image_url"], use_column_width=True, caption=current_ad.get("title", "Featured Business"))
-
     st.session_state.ad_index = (st.session_state.ad_index + 1) % len(ads_data)
 
 st.markdown("---")
 
-# 🧾 Tabs
+# ✅ Tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📝 Add Business", 
     "📍 View Businesses", 
@@ -108,21 +112,15 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📢 Upload Advertisement"
 ])
 
-# Tab content
 with tab1:
     add_business_form()
 
 with tab2:
     st.subheader("📍 Businesses Near You")
+    from components.business_card import render_business_card  # Adjust if needed
     businesses = get_businesses()
     for b in businesses:
-        with st.container():
-            st.markdown(f"""
-                <div class="business-card">
-                    <img src="{b['logo_url']}" />
-                    <div><strong>{b['business_name']}</strong></div>
-                </div>
-            """, unsafe_allow_html=True)
+        render_business_card(b)
 
 with tab3:
     register_buyer()
@@ -136,16 +134,6 @@ with tab5:
 with tab6:
     upload_ad_form()
 
-# ✅ Mongo URI fetch — prioritize Streamlit secrets, fallback to env
-is_streamlit_cloud = os.getenv("STREAMLIT_SERVER_HEADLESS") == "1"
-if is_streamlit_cloud:
-    mongo_uri = st.secrets.get("MONGODB_URI")
-else:
-    mongo_uri = os.getenv("MONGODB_URI")
-
-# Optional: Show message for debug
-st.sidebar.info(f"Running in {'Streamlit Cloud' if is_streamlit_cloud else 'Local'} Mode")
-
-# Error handling if URI is still not set
+# ✅ Fallback warning
 if not mongo_uri:
-    st.warning("MongoDB URI is missing!")
+    st.warning("⚠️ MongoDB URI is missing! Please check your environment variables or Streamlit secrets.")
