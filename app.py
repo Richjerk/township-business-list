@@ -5,7 +5,11 @@ from chat import load_chatbot, ask_chatbot_form
 from ads import show_ads, upload_ad_form
 from user import register_buyer
 from utils import configure_cloudinary
+from dotenv import load_dotenv
 import os
+
+# ✅ Load environment variables first
+load_dotenv()
 
 # ✅ MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
@@ -14,10 +18,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# ⛅ Cloudinary setup
+# ✅ Cloudinary setup
 configure_cloudinary()
 
-# 🤖 Load chatbot
+# ✅ Load chatbot
 chatbot = load_chatbot()
 
 # 🌗 Theme Switcher
@@ -132,5 +136,7 @@ with tab5:
 with tab6:
     upload_ad_form()
 
-# Get Mongo URI from Streamlit secrets or environment variable
-mongo_uri = st.secrets.get("MONGO_URI") or os.getenv("MONGO_URI")
+# ✅ Mongo URI fetch — prioritize Streamlit secrets, fallback to env
+mongo_uri = st.secrets.get("MONGODB_URI") or os.getenv("MONGODB_URI")
+if not mongo_uri:
+    st.warning("MongoDB URI is missing!")
