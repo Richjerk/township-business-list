@@ -1,20 +1,19 @@
+import os
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
+from dotenv import load_dotenv
+
+# App modules
 from business import add_business_form, view_businesses_form, view_premium_businesses, get_businesses
 from chat import load_chatbot, ask_chatbot_form
 from ads import show_ads, upload_ad_form
 from user import register_buyer
 from utils import configure_cloudinary
-from dotenv import load_dotenv
-from chat import ask_chatbot_form
-
-ask_chatbot_form()
-import os
 
 # ✅ Load environment variables
 load_dotenv()
 
-# ✅ Configure Mongo URI (fixed key name)
+# ✅ Configure Mongo URI
 is_streamlit_cloud = os.getenv("STREAMLIT_SERVER_HEADLESS") == "1"
 mongo_uri = st.secrets.get("MONGO_URI") if is_streamlit_cloud else os.getenv("MONGO_URI")
 
@@ -141,7 +140,7 @@ with tab6:
 if not mongo_uri:
     st.warning("⚠️ MongoDB URI is missing! Please check your environment variables or Streamlit secrets.")
 
-# ✅ Optional Debug/Test Section (can be removed later)
+# ✅ Optional Debug/Test Section
 if st.sidebar.checkbox("🔍 Show Debug Info"):
     st.subheader("🔍 Debug: Mongo URI & Cloudinary Config")
     st.write("Mongo URI:", mongo_uri)
