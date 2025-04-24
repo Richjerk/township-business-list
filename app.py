@@ -8,7 +8,7 @@ from utils import configure_cloudinary
 from dotenv import load_dotenv
 import os
 
-# ✅ Load environment variables first
+# ✅ Load environment variables for local development
 load_dotenv()
 
 # ✅ MUST BE FIRST STREAMLIT COMMAND
@@ -34,7 +34,7 @@ st.session_state.theme = "dark" if theme_toggle else "light"
 
 # Apply theme-based styles
 if st.session_state.theme == "dark":
-    st.markdown("""
+    st.markdown(""" 
         <style>
             body, [data-testid="stAppViewContainer"] {
                 background-color: #1e1e1e;
@@ -137,6 +137,15 @@ with tab6:
     upload_ad_form()
 
 # ✅ Mongo URI fetch — prioritize Streamlit secrets, fallback to env
-mongo_uri = st.secrets.get("MONGODB_URI") or os.getenv("MONGODB_URI")
+is_streamlit_cloud = os.getenv("STREAMLIT_SERVER_HEADLESS") == "1"
+if is_streamlit_cloud:
+    mongo_uri = st.secrets.get("MONGODB_URI")
+else:
+    mongo_uri = os.getenv("MONGODB_URI")
+
+# Optional: Show message for debug
+st.sidebar.info(f"Running in {'Streamlit Cloud' if is_streamlit_cloud else 'Local'} Mode")
+
+# Error handling if URI is still not set
 if not mongo_uri:
     st.warning("MongoDB URI is missing!")
