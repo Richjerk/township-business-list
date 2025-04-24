@@ -12,19 +12,22 @@ HF_API_KEY = os.getenv("HF_API_KEY")
 if not HF_API_KEY:
     raise ValueError("Hugging Face API key not found. Please set HF_API_KEY in your .env file.")
 
-client = InferenceClient(
-    provider="hf-inference",
-    api_key=HF_API_KEY,
-)
+client = InferenceClient(api_key=HF_API_KEY)
+
+def load_chatbot():
+    st.success("🤖 Township Business Assistant loaded successfully!")
 
 def get_context_from_db():
-    businesses = get_all_businesses()
-    return "\n".join([f"{b['business_name']}: {b['business_description']}" for b in businesses])
+    try:
+        businesses = get_all_businesses()
+        return "\n".join([f"{b['business_name']}: {b['business_description']}" for b in businesses])
+    except Exception as e:
+        st.error("Failed to load business context from the database.")
+        return "Local businesses include a variety of services and shops."
 
 def ask_chatbot_form():
     st.subheader("💬 Chat with the Township Business Assistant")
 
-    # Initialize session state
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
@@ -35,29 +38,30 @@ def ask_chatbot_form():
             context = get_context_from_db()
             prompt = f"{context}\n\nQ: {user_question}\nA:"
 
-            stream = client.chat.completions.create(
-                model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=512,
-                stream=True,
-            )
+            try:
+                stream = client.chat.completions.create(
+                    model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=512,
+                    stream=True,
+                )
 
-            full_response = ""
-            response_container = st.empty()
+                full_response = ""
+                response_container = st.empty()
 
-            for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    response_container.markdown(full_response)
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        response_container.markdown(full_response)
 
-            st.session_state.chat_history.append({
-                "question": user_question,
-                "answer": full_response
-            })
+                st.session_state.chat_history.append({
+                    "question": user_question,
+                    "answer": full_response
+                })
 
-    # Scrollable chat history UI
+            except Exception as e:
+                st.error(f"Error talking to chatbot: {e}")
+
     with st.container():
         st.markdown(
             """
